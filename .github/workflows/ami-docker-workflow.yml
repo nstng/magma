@@ -1,0 +1,51 @@
+---
+name: docker-ami
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - master
+      - v1.*
+
+# Needs to make the ami version dynamic and includes SHA
+jobs:
+  publish-docker-ami:
+    name: publish-docker-ami
+    runs-on: ubuntu-latest
+    env:
+      MAGMA_ROOT: "${{ github.workspace }}"
+      CODE_DIR: "${{ github.workspace }}/experimental/cloudstrapper"
+      VARS_DIR: "${{ github.workspace }}/experimental/cloudstrapper/playbooks/roles/vars"
+      WORK_DIR: "${{ github.workspace }}/experimental/cloudstrapper/playbooks"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run apt
+        run: sudo apt-get update && sudo apt -y upgrade
+      - name: setup pyenv
+        uses: "gabrielfalcao/pyenv-action@v8"
+        with:
+          default: 3.7.0
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+      - name: Install Dependencies
+        run: |
+          pip install ansible awscli boto3
+          sudo apt-get update
+      - name: Export AWS Credentials
+        run: |
+          sed -i -e "s@awsAccessKey:@& ${{ secrets.FB_AWS_ACCESS_KEY }}@1"  ${{ env.VARS_DIR }}/secrets.yaml
+          sed -i -e "s@awsSecretKey:@& ${{ secrets.FB_AWS_SECRET_ACCESS_KEY }}@1"  ${{ env.VARS_DIR }}/secrets.yaml
+      - name: Launch ec2 instance
+        run: |
+          ansible-playbook ${{ env.WORK_DIR }}/docker-ami-provision.yaml -e "dirLocalInventory=${{ env.VARS_DIR }}" -e "host_id=DOCKER_AGW_SNAPSHOT"  -e "awsAgwRegion=us-east-1"
+      - name: Install needed components on the remote host
+        run: |
+          ansible-playbook ${{ env.WORK_DIR }}/docker-ami-configure.yaml -e "dirLocalInventory=${{ env.VARS_DIR }}" -e "dockerHost=tag_agw_docker" -e "awsAgwRegion=us-east-1"  -i ${{ env.VARS_DIR }}/common_instance_aws_ec2.yaml -u ubuntu
+      - name: Snapshot the instance
+        run: |
+          ansible-playbook ${{ env.WORK_DIR }}/docker-ami-init.yaml -e "dirLocalInventory=${{ env.VARS_DIR }}"  -e "awsAgwRegion=us-east-1"
+      - name: Terminate instance
+        if: always()
+        run: |
+          ansible-playbook ${{ env.WORK_DIR }}/docker-cleanup.yaml -e "dirLocalInventory=${{ env.VARS_DIR }}" -e "host_id=DOCKER_AGW_SNAPSHOT"  -e "awsAgwRegion=us-east-1"

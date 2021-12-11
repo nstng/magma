@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO: Actually install docker and add MAGMA_USER to docker group
+
 MODE=$1
 WHOAMI=$(whoami)
 MAGMA_USER="ubuntu"
