@@ -37,7 +37,6 @@ DEPS = [
     "//orc8r/protos:metricsd_python_proto",
     "//orc8r/protos:redis_python_proto",
     "//orc8r/protos:service303_python_grpc",
-    "//orc8r/protos:service303_python_proto",
     "//orc8r/gateway/python/magma/common/redis:containers",
     "//orc8r/gateway/python/magma/common/redis:serializers",
     requirement("redis_collections"),

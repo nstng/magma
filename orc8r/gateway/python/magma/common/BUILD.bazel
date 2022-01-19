@@ -49,7 +49,19 @@ py_library(
         "service_registry.py",
     ],
     deps = [
-        "//orc8r/gateway/python/magma/configuration:events",
+        ":metrics",
         "//orc8r/gateway/python/magma/configuration:mconfig_managers",
+        "//orc8r/gateway/python/magma/configuration:events",
+        requirement("grpcio"),
+        requirement("prometheus_client"),
     ],
+)
+
+py_library(
+    name = "misc_utils",
+    srcs = ["misc_utils.py"],
+    deps = [
+        requirement("netifaces"),
+        requirement("snowflake"),
+    ]
 )

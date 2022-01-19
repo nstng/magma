@@ -16,13 +16,27 @@ redis-lock
 jsonpickle
 netifaces
 scapy
+# ImportError: cannot import name 'ALREADY_HANDLED' from 'eventlet.wsgi'
+# https://stackoverflow.com/questions/67409452/gunicorn-importerror-cannot-import-name-already-handled-from-eventlet-wsgi
+# apt-cache policy python3-eventlet -> 0.25.1-2ubuntu1.1
+eventlet<=0.25.1
+netifaces
+ryu
+pycrypto
+redis_collections
+redis_lock
+wsgiserver
+flask
+pyroute2
+aiodns
+pymemoize
 
 # bazelbase container requirements
 hiredis
 deprecated
 wrapt
 
-# unit test requirements
+# test requirements
 fakeredis
 freezegun
 pytest

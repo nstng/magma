@@ -1,0 +1,332 @@
+# Copyright 2022 The Magma Authors.
+
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# TODO these are all "sudo" tests
+
+load("//bazel:python_test.bzl", "pytest_test")
+load("@python_deps//:requirements.bzl", "requirement")
+
+COMMON_TEST_DEPS = [
+    ":pipelined_test_util",
+    requirement("pytest"),
+    requirement("pytest-cov"),
+    requirement("coverage-lcov"),
+    "//lte/gateway/python/magma/pipelined/tests/app:app",
+    "//lte/gateway/python/magma/pipelined:pipelined",
+]
+
+# note: "manual" keyword will exclude the target from expansion of target pattern 
+# wildcards (..., :*, :all, etc.) 
+COMMON_TAGS = ["lte", "pipelined", "manual"]
+
+pytest_test(
+    name = "test_access_control",
+    srcs = ["test_access_control.py"],
+    deps = COMMON_TEST_DEPS + [
+        "//lte/protos:mconfigs_python_proto", # TODO productive?
+    ],
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_internal_pkt_ipfix_export",
+    srcs = ["test_internal_pkt_ipfix_export.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_arp_non_nat",
+    srcs = ["test_arp_non_nat.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ipv6_prefix_mapper",
+    srcs = ["test_ipv6_prefix_mapper.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_arp",
+    srcs = ["test_arp.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ipv6_solicitation",
+    srcs = ["test_ipv6_solicitation.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_check_quota",
+    srcs = ["test_check_quota.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_li_mirror",
+    srcs = ["test_li_mirror.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_classifier_mme_flow_dl",
+    srcs = ["test_classifier_mme_flow_dl.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ng_servicer_node",
+    srcs = ["test_ng_servicer_node.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_classifier",
+    srcs = ["test_classifier.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ng_servicer_session",
+    srcs = ["test_ng_servicer_session.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_classifier_traffic",
+    srcs = ["test_classifier_traffic.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_paging",
+    srcs = ["test_paging.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_conntrack",
+    srcs = ["test_conntrack.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_pull_stats",
+    srcs = ["test_pull_stats.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_cwf_restart_resilience",
+    srcs = ["test_cwf_restart_resilience.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_qos",
+    srcs = ["test_qos.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_dpi",
+    srcs = ["test_dpi.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_qos_pyroute2",
+    srcs = ["test_qos_pyroute2.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ebpf_dl_dp",
+    srcs = ["test_ebpf_dl_dp.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_redirect",
+    srcs = ["test_redirect.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ebpf_dp",
+    srcs = ["test_ebpf_dp.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_restart_resilience",
+    srcs = ["test_restart_resilience.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_encoding",
+    srcs = ["test_encoding.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_rpc_servicer",
+    srcs = ["test_rpc_servicer.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_enforcement_5g",
+    srcs = ["test_enforcement_5g.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_rule_mappers",
+    srcs = ["test_rule_mappers.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_enforcement",
+    srcs = ["test_enforcement.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_service_manager",
+    srcs = ["test_service_manager.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_enforcement_stats",
+    srcs = ["test_enforcement_stats.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_tunnel_id_mapper",
+    srcs = ["test_tunnel_id_mapper.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_gy",
+    srcs = ["test_gy.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_tunnel_learn",
+    srcs = ["test_tunnel_learn.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_he",
+    srcs = ["test_he.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ue_mac",
+    srcs = ["test_ue_mac.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_imsi_encoding",
+    srcs = ["test_imsi_encoding.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_ue_passthrough",
+    srcs = ["test_ue_passthrough.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_inout_non_nat",
+    srcs = ["test_inout_non_nat.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_uplink_bridge",
+    srcs = ["test_uplink_bridge.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_inout",
+    srcs = ["test_inout.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+pytest_test(
+    name = "test_vlan_learn",
+    srcs = ["test_vlan_learn.py"],
+    deps = COMMON_TEST_DEPS,
+    tags = COMMON_TAGS
+)
+
+py_library(
+    name = "pipelined_test_util",
+    srcs = ["pipelined_test_util.py"],
+    deps = [
+        requirement("fakeredis"),
+    ],
+)

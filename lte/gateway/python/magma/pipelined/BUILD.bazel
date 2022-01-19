@@ -9,11 +9,151 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("@python_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
+
+LTE_ROOT = "../../"
+ORC8R_ROOT = LTE_ROOT + "../../../orc8r/gateway/python"
 
 py_library(
     name = "bridge_util",
     srcs = ["bridge_util.py"],
+)
+
+SRCS = [
+    "main.py",
+    "check_quota_server.py",
+    "rpc_servicer.py",
+    "service_manager.py",
+    "rule_mappers.py",
+    "tunnel_id_store.py",
+    "datapath_setup.py",
+    "gtp_stats_collector.py",
+    "ifaces.py",
+    "internal_ip_allocator.py",
+]
+
+DEPS = [
+    "//lte/protos:mconfigs_python_proto",
+    "//lte/protos:pipelined_python_grpc",
+
+    "//lte/gateway/python/magma/pipelined/app:app",
+    "//lte/gateway/python/magma/pipelined/ebpf:ebpf_manager",
+
+    "//orc8r/gateway/python/magma/common:misc_utils",
+    "//orc8r/gateway/python/magma/common:sentry",
+    "//orc8r/gateway/python/magma/common:service",
+
+    "//orc8r/gateway/python/magma/configuration:environment",
+
+    "//orc8r/gateway/python/magma/magmad/check:subprocess_workflow",
+
+    "//orc8r/protos:eventd_python_grpc",
+    "//orc8r/protos:mconfig_python_proto",
+    "//orc8r/protos:mconfigs_python_proto",
+    "//orc8r/protos:metricsd_python_proto",
+    "//orc8r/protos:service303_python_grpc",
+    
+    "@aioeventlet//:aioeventlet",
+
+    requirement("wsgiserver"),
+    requirement("flask"),
+]
+
+py_binary(
+    name = "pipelined",
+    srcs = SRCS,
+    # legacy_creat_init = False is required to fix issues in module import, see https://github.com/rules-proto-grpc/rules_proto_grpc/issues/145
+    legacy_create_init = False,
+    main = "main.py",
+    imports = [
+        LTE_ROOT,
+        ORC8R_ROOT,
+    ],
+    python_version = "PY3",
+    deps = DEPS,
+    tags = ["requires-fakeroot"]
+)
+
+# TODO FOLLOWING hmmm used by pipelined/app via pipelined run - should this be in pipelined src?
+
+py_library(
+    name = "encoding",
+    srcs = ["encoding.py"],
+    deps = [
+        requirement("pycrypto"),
+    ],
+)
+
+py_library(
+    name = "envoy_client",
+    srcs = ["envoy_client.py"],
+    deps = ["//feg/protos:envoy_controller_python_grpc"]
+)
+
+py_library(
+    name = "policy_converters",
+    srcs = [
+        "policy_converters.py",
+        "ipv6_prefix_store.py",
+    ],
+    deps = [
+        "//orc8r/gateway/python/magma/common/redis:client",
+        "//orc8r/gateway/python/magma/common/redis:containers",
+        "//lte/gateway/python/magma/pipelined/openflow:magma_match",
+        "//lte/protos:mobilityd_python_proto",
+        "//lte/protos:policydb_python_proto",
+    ],
+)
+
+py_library(
+    name = "mobilityd_client",
+    srcs = ["mobilityd_client.py"],
+    deps = ["//lte/protos:mobilityd_python_grpc"]
+)
+
+py_library(
+    name = "directoryd_client",
+    srcs = ["directoryd_client.py"],
+    deps = ["//orc8r/protos:directoryd_python_grpc"]
+)
+
+py_library(
+    name = "set_interface_client",
+    srcs = ["set_interface_client.py"],
+    deps = ["//lte/protos:session_manager_python_grpc"],
+)
+
+py_library(
+    name = "redirect",
+    srcs = ["redirect.py"],
+    deps = [
+        requirement("aiodns"),
+        requirement("pymemoize"),
+        "//lte/gateway/python/magma/redirectd:redirect_store",
+    ],
+)
+
+py_library(
+    name = "metrics",
+    srcs = ["metrics.py"],
+    deps = [requirement("prometheus_client")],
+)
+
+py_library(
+    name = "imsi",
+    srcs = ["imsi.py"],
+)
+
+py_library(
+    name = "utils",
+    srcs = ["utils.py"],
+)
+
+# TODO does this belong in binary?
+py_library(
+    name = "internal_ip_allocator",
+    srcs = ["internal_ip_allocator.py"],
 )

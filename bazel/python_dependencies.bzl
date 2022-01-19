@@ -11,6 +11,7 @@
 
 """Python Toolchain and PIP Dependencies"""
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 def configure_python_dependencies(name = None):
@@ -22,4 +23,15 @@ def configure_python_dependencies(name = None):
         python_interpreter = "python3",
         requirements_lock = "//bazel/external:requirements.txt",
         visibility = ["//visibility:public"],
+    )
+
+    new_git_repository(
+        name = "aioeventlet",
+        remote = "https://github.com/openstack-archive/deb-python-aioeventlet.git",
+        build_file = "//bazel/external:aioeventlet.BUILD",
+        tag = "0.5.1",
+        patches = [
+            "//bazel/patches/aioeventlet:aioeventlet_fd_exception.patch",
+            "//bazel/patches/aioeventlet:aioeventlet.py38.patch",
+        ]
     )

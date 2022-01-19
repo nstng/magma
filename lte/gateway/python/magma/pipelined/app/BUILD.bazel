@@ -1,0 +1,65 @@
+# Copyright 2022 The Magma Authors.
+
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_python//python:defs.bzl", "py_library")
+load("@python_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "app",
+    srcs = [
+        "access_control.py",
+        "he.py",
+        "of_rest_server.py",
+        "check_quota.py",
+        "inout.py",
+        "ue_mac.py",
+        "enforcement.py",
+        "enforcement_stats.py",
+        "arp.py",
+        "li_mirror.py",
+        "restart_mixin.py",
+        "ipfix.py",
+        "dpi.py",
+        "classifier.py",
+        "conntrack.py",
+        "policy_mixin.py",
+        "gy.py",
+        "ipv6_solicitation.py",
+        "ng_services.py",
+        "startup_flows.py",
+        "tunnel_learn.py",
+        "uplink_bridge.py",
+        "vlan_learn.py",
+        "xwf_passthru.py",
+        "base.py"
+    ],
+    deps = [
+        "//lte/protos:mobilityd_python_proto",
+        "//lte/protos:pipelined_python_proto",
+        "//lte/gateway/python/magma/pipelined:bridge_util",
+        "//lte/gateway/python/magma/pipelined:directoryd_client",
+        "//lte/gateway/python/magma/pipelined:encoding",
+        "//lte/gateway/python/magma/pipelined:envoy_client",
+        "//lte/gateway/python/magma/pipelined:metrics",
+        "//lte/gateway/python/magma/pipelined:mobilityd_client",
+        "//lte/gateway/python/magma/pipelined:redirect",
+        "//lte/gateway/python/magma/pipelined:utils",
+        "//lte/gateway/python/magma/pipelined/openflow:exceptions",
+        "//lte/gateway/python/magma/pipelined/openflow:flows",
+        "//lte/gateway/python/magma/pipelined/ng_manager:session_state_manager",
+        "//lte/gateway/python/magma/pipelined/ng_manager:node_state_manager",
+        "//lte/gateway/python/magma/pipelined/qos:qos",
+        requirement("ryu"),
+        requirement("scapy"),
+    ],
+)

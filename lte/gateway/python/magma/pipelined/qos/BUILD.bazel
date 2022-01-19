@@ -1,4 +1,4 @@
-# Copyright 2021 The Magma Authors.
+# Copyright 2022 The Magma Authors.
 
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
@@ -9,42 +9,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@python_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library")
+load("@python_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
 
 py_library(
-    name = "service_configs",
-    srcs = ["service_configs.py"],
-    deps = [
-        requirement("pyyaml"),
-        ":exceptions",
-    ],
-)
-
-py_library(
-    name = "exceptions",
-    srcs = ["exceptions.py"],
-)
-
-py_library(
-    name = "mconfig_managers",
+    name = "qos",
     srcs = [
-        "mconfig_managers.py",
-        "mconfigs.py",
+        "common.py",
+        "qos_tc_impl.py",
+        "tc_ops_pyroute2.py",
+        "types.py",
+        "qos_meter_impl.py",
+        "utils.py",
+        "tc_ops_cmd.py",
+        "tc_ops.py",
     ],
     deps = [
-        "//orc8r/gateway/python/magma/eventd:eventd_client",
+        requirement("pyroute2"),
+        "//lte/gateway/python/magma/pipelined/openflow:meters",
     ],
-)
-
-py_library(
-    name = "events",
-    srcs = ["events.py"],
-)
-
-py_library(
-    name = "environment",
-    srcs = ["environment.py"],
 )

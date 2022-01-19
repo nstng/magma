@@ -21,15 +21,25 @@ py_library(
         requirement("redis"),
         requirement("hiredis"),
         "//feg/protos:mconfigs_python_proto",
+        "//orc8r/gateway/python/magma/configuration:service_configs",
     ],
 )
 
 py_library(
     name = "containers",
     srcs = ["containers.py"],
+    deps = [
+        ":serializers",
+        requirement("redis_collections"),
+        requirement("redis_lock"),
+    ],
 )
 
 py_library(
     name = "serializers",
     srcs = ["serializers.py"],
+    deps = [
+        "//orc8r/protos:redis_python_proto",
+        requirement("jsonpickle"),
+    ],
 )

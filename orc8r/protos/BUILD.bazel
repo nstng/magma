@@ -89,6 +89,16 @@ proto_library(
     deps = [":common_proto"],
 )
 
+python_proto_library(
+    name = "directoryd_python_proto",
+    protos = [":directoryd_proto"]
+)
+
+python_grpc_library(
+    name = "directoryd_python_grpc",
+    protos = [":directoryd_proto"]
+)
+
 cpp_proto_library(
     name = "redis_cpp_proto",
     protos = [":redis_proto"],
