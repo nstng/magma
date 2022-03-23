@@ -21,7 +21,10 @@ from magma.pipelined.bridge_util import BridgeTools
 from magma.pipelined.openflow.magma_match import MagmaMatch
 from magma.pipelined.openflow.registers import Direction
 from magma.pipelined.tests.app.flow_query import RyuDirectFlowQuery as FlowQuery
-from magma.pipelined.tests.app.packet_builder import IPPacketBuilder
+from magma.pipelined.tests.app.packet_builder import (
+    IPPacketBuilder, 
+    IPv6PacketBuilder,
+)
 from magma.pipelined.tests.app.packet_injector import ScapyPacketInjector
 from magma.pipelined.tests.app.start_pipelined import (
     PipelinedController,
@@ -120,6 +123,12 @@ class AbstractAccessControlTest(unittest.TestCase):
             default_ambr_config, self._tbl_num,
         )
 
+    def _setupSubscribersIpV6(self):
+        return SubContextConfig(
+            'IMSI001010000000013', 'ab42::74',
+            default_ambr_config, self._tbl_num,
+        )
+
 class AccessControlTestLTE(AbstractAccessControlTest):
     INBOUND_TEST_IP = '127.0.0.1'
     OUTBOUND_TEST_IP = '127.1.0.1'
@@ -150,6 +159,7 @@ class AccessControlTestLTE(AbstractAccessControlTest):
                         },
                     ],
                     'block_agw_local_ips': False,
+                    'block_agw_local_ips_ipv6': False,
                 },
                 'clean_restart': True,
             }
@@ -405,6 +415,7 @@ class AccessControlTestCWF(AbstractAccessControlTest):
                         },
                     ],
                     'block_agw_local_ips': False,
+                    'block_agw_local_ips_ipv6': False,
                 },
             }
         return config
@@ -452,6 +463,7 @@ class AccessControlTestLocalIpBlockLTE(AbstractAccessControlTest):
                 'access_control': {
                     'ip_blocklist': [],
                     'block_agw_local_ips': True,
+                    'block_agw_local_ips_ipv6': False,
                 },
                 'clean_restart': True,
                 'mtr_interface': 'mtr0',
@@ -498,9 +510,83 @@ class AccessControlTestLocalIpBlockLTE(AbstractAccessControlTest):
             self.service_manager,
         )
 
+class AccessControlTestLocalIpBlockLTEIpV6(AbstractAccessControlTest):
+    #OUTBOUND_TEST_IP2 = '200.0.0.1'
+    #OUTBOUND_TEST_IP1 = '127.1.0.1'
+    #BOTH_DIR_TEST_IP = '127.2.0.1'
+    OUTBOUND_TEST_IP2 = 'ab23::1'
+    OUTBOUND_TEST_IP1 = 'fe80:1::1'
+    BOTH_DIR_TEST_IP = 'fe80:2::1'
+
+    @classmethod
+    def getConfig(cls):
+        config = {
+                'setup_type': 'LTE',
+                'allow_unknown_arps': False,
+                'bridge_name': cls.BRIDGE,
+                'bridge_ip_address': cls.BRIDGE_IP,
+                'nat_iface': 'eth2',
+                'enodeb_iface': 'eth1',
+                'qos': {'enable': False},
+                'access_control': {
+                    'ip_blocklist': [],
+                    'block_agw_local_ips': False,
+                    'block_agw_local_ips_ipv6': True,
+                },
+                'clean_restart': True,
+                'mtr_interface': 'mtr0',
+            }
+        return config
+
+    @classmethod
+    def getMconfig(cls):
+        return PipelineD(
+                allowed_gre_peers=[{'ip': '1.2.3.4/24', 'key': 123}],
+            )
+
+    def test_blocking_ip_match(self):
+        """
+        Inbound ip match test, checks that packets are properly matched when
+        the inbound traffic matches an ip in the blocklist.
+
+        Assert:
+            Both packets are matched
+            Ip match flows are added
+        """
+        sub = self._setupSubscribersIpV6()
+
+        isolator = RyuDirectTableIsolator(
+            RyuForwardFlowArgsBuilder.from_subscriber(sub).build_requests(),
+            self.testing_controller,
+        )
+
+        # Set up packets
+        pkt_sender = ScapyPacketInjector(self.BRIDGE)
+        packets = [
+            _build_default_ipv6_packet(self.MAC_DEST, self.OUTBOUND_TEST_IP1, sub.ip),
+            _build_default_ipv6_packet(self.MAC_DEST, self.OUTBOUND_TEST_IP2, sub.ip),
+            _build_default_ipv6_packet(self.MAC_DEST, self.BOTH_DIR_TEST_IP, sub.ip),
+        ]
+
+        with isolator:
+            for packet in packets:
+                pkt_sender.send(packet)
+
+        assert_bridge_snapshot_match(
+            self,
+            self.BRIDGE,
+            self.service_manager,
+        )
+
 
 def _build_default_ip_packet(mac, dst, src):
     return IPPacketBuilder() \
+        .set_ip_layer(dst, src) \
+        .set_ether_layer(mac, "00:00:00:00:00:00") \
+        .build()
+
+def _build_default_ipv6_packet(mac, dst, src):
+    return IPv6PacketBuilder() \
         .set_ip_layer(dst, src) \
         .set_ether_layer(mac, "00:00:00:00:00:00") \
         .build()

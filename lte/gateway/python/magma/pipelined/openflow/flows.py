@@ -57,11 +57,13 @@ def add_drop_flow(
         MagmaOFError: if the flow can't be added
         Exception: If the actions contain NXActionResubmitTable.
     """
+    print("YYYYYYYYYYYYYYYYYYYy1")
     mod = get_add_drop_flow_msg(
         datapath, table, match, actions=actions,
         instructions=instructions, priority=priority,
         cookie=cookie, idle_timeout=idle_timeout, hard_timeout=hard_timeout,
     )
+    print("YYYYYYYYYYYYYYYYYYYy2")
     logger.debug('flowmod: %s (table %s)', mod, table)
     messages.send_msg(datapath, mod, retries)
 
@@ -300,14 +302,16 @@ def get_add_drop_flow_msg(
         Exception: If the actions contain NXActionResubmitTable.
     """
     ofproto, parser = datapath.ofproto, datapath.ofproto_parser
-
+    print("XXXXXXXXXXXXXXXXXXXXXX1")
     _check_resubmit_action(actions, parser)
 
     inst = __get_instructions_for_actions(
         ofproto, parser,
         actions, instructions,
     )
+    print("XXXXXXXXXXXXXXXXXXXXXX2")
     ryu_match = parser.OFPMatch(**match.ryu_match)
+    print("XXXXXXXXXXXXXXXXXXXXXX3")
 
     return parser.OFPFlowMod(
         datapath=datapath, priority=priority,

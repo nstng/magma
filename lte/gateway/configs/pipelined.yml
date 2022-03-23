@@ -50,7 +50,9 @@ default_rule_tag: 0x1
 # Pipeline application level configs
 access_control:
   # Blocks access to all AGW local IPs from UEs.
+  # TODO 12074 add suffix _ipv4
   block_agw_local_ips: true
+  block_agw_local_ips_ipv6: true
 
   # Traffic to ip blocks in the specified direction in the blocklist will be
   # dropped. Each entry in the blocklist should consist of an ip and a
@@ -64,7 +66,9 @@ access_control:
   #   - ip: '127.0.0.1/24'
   #     direction: 'outbound
   #   - ip: '127.0.0.1/255.255.255.0'
+  # TODO 12074 add suffix _ipv4
   ip_blocklist: []
+  ip_blocklist_ipv6: []
 
 meter:
   enabled: true

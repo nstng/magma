@@ -42,7 +42,7 @@ class AccessControlController(MagmaController):
         'AccessControlConfig',
         [
             'setup_type', 'ip_blocklist', 'allowed_gre_peers',
-            'block_agw_local_ips', 'mtr_interface',
+            'block_agw_local_ips', 'block_agw_local_ips_ipv6', 'mtr_interface',
         ],
     )
 
@@ -58,12 +58,14 @@ class AccessControlController(MagmaController):
 
     def _get_config(self, config_dict, mconfig):
         block_agw_local_ips = config_dict['access_control'].get('block_agw_local_ips', True)
+        block_agw_local_ips_ipv6 = config_dict['access_control'].get('block_agw_local_ips_ipv6', True)
         mtr_interface = config_dict.get('mtr_interface', None)
         return self.AccessControlConfig(
             setup_type=config_dict['setup_type'],
             ip_blocklist=config_dict['access_control']['ip_blocklist'],
             allowed_gre_peers=mconfig.allowed_gre_peers,
             block_agw_local_ips=block_agw_local_ips,
+            block_agw_local_ips_ipv6=block_agw_local_ips_ipv6,
             mtr_interface=mtr_interface,
         )
 
@@ -78,6 +80,7 @@ class AccessControlController(MagmaController):
         self._install_default_flows(datapath)
         self._install_ip_blocklist_flow(datapath)
         self._install_local_ip_blocking_flows(datapath)
+        self._install_local_ip_blocking_flows_ipv6(datapath)
         if self.config.setup_type == 'CWF':
             self._install_gre_allow_flows(datapath)
 
@@ -154,6 +157,7 @@ class AccessControlController(MagmaController):
             resubmit_table=self.next_table,
         )
 
+    # TODO 12074 add suffix _ipv4
     def _install_local_ip_blocking_flows(self, datapath):
         if self.config.setup_type != 'LTE':
             return
@@ -163,11 +167,14 @@ class AccessControlController(MagmaController):
         direction = self.CONFIG_INBOUND_DIRECTION
         # block access to entire 127.* ip network
         local_ipnet = ipaddress.ip_network('127.0.0.0/8')
+        #for ip in local_ipnet:
+        #    print("FFFFFFFFFFFFFFFFFFF", ip)
         self._install_ip_blocking_flow(datapath, local_ipnet, direction)
 
         for iface in interfaces:
             if_addrs = netifaces.ifaddresses(iface).get(netifaces.AF_INET, [])
             for addr in if_addrs:
+                print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ", addr['addr'], "BBBBBB", iface)
                 if ipaddress.ip_address(addr['addr']) in local_ipnet:
                     continue
                 self.logger.info("Add blocking rule for: %s, iface %s", addr['addr'], iface)
@@ -177,6 +184,92 @@ class AccessControlController(MagmaController):
                 # Add flow to allow ICMP for monitoring flows.
                 if iface == self.config.mtr_interface:
                     self._install_local_icmp_flows(datapath, ip_network)
+
+    def _install_local_ip_blocking_flows_ipv6(self, datapath):
+        if self.config.setup_type != 'LTE':
+            return
+        if not self.config.block_agw_local_ips_ipv6:
+            return
+        interfaces = netifaces.interfaces()
+        direction = self.CONFIG_INBOUND_DIRECTION
+        # block access to entire 127.* ip network
+        local_ipnet = ipaddress.ip_network('fe80::/64') # TODO does not seem to work, can this become very large??? yes
+        #local_ipnet = ipaddress.ip_network('::1/128') # TODO does not seem to work, can this become very large???
+        self._install_ip_blocking_flow_ipv6(datapath, local_ipnet, direction)
+
+        if "fe80:1::1" in local_ipnet:
+            print("FOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOUND")
+        else:
+            print("NFOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOUND")
+
+        for iface in interfaces:
+            if_addrs = netifaces.ifaddresses(iface).get(netifaces.AF_INET6, [])
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+            for addr in if_addrs:
+                # Sayyyy whaaaaaat?! https://github.com/perfsonar/pscheduler/blob/9026ef35c0dcd621c339e31f95f215bc7d6fe969/python-pscheduler/pscheduler/pscheduler/limitprocessor/identifier/localif.py#L45
+                # str(ifaddr['addr'].split('%')[0]
+                current_addr = str(addr['addr'].split('%')[0])
+                print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB ", current_addr, "BBBBBB", iface)
+                if ipaddress.ip_address(current_addr) in local_ipnet:
+                   continue
+                self.logger.info("Add blocking rule for: %s, iface %s", current_addr, iface)
+
+                ip_network = ipaddress.IPv6Network(current_addr)
+                print("CCCCCCCCCCCCCCCCCCCCCCCC")
+                self._install_ip_blocking_flow_ipv6(datapath, ip_network, direction)
+                # Add flow to allow ICMP for monitoring flows.
+                print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+                if iface == self.config.mtr_interface:
+                    self._install_local_icmp_flows_ipv6(datapath, ip_network)
+                print("EEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+
+    def _install_ip_blocking_flow_ipv6(self, datapath, ip_network, direction):
+        """
+        Install flows to drop any packets with ip address blocks matching the
+        blocklist.
+        """
+        print("ZZZZZZZZZZZZZZZZZ1")
+        if direction and direction not in [
+            self.CONFIG_INBOUND_DIRECTION,
+            self.CONFIG_OUTBOUND_DIRECTION,
+        ]:
+            self.logger.error(
+                'Invalid direction found in ip blocklist: %s', direction,
+            )
+            return
+        print("ZZZZZZZZZZZZZZZZZ2")
+        # If no direction is specified, both outbound and inbound traffic
+        # will be dropped.
+        if direction is None or direction == self.CONFIG_INBOUND_DIRECTION:
+            match = MagmaMatch(
+                direction=Direction.OUT,
+                eth_type=ether_types.ETH_TYPE_IP,
+                ipv6_dst=(
+                    ip_network.network_address,
+                    ip_network.netmask,
+                ),
+            )
+            print("ZZZZZZZZZZZZZZZZZ22")
+            flows.add_drop_flow(
+                datapath, self.tbl_num, match, [],
+                priority=flows.DEFAULT_PRIORITY,
+            )
+        print("ZZZZZZZZZZZZZZZZZ3")
+        if direction is None or \
+                direction == self.CONFIG_OUTBOUND_DIRECTION:
+            match = MagmaMatch(
+                direction=Direction.IN,
+                eth_type=ether_types.ETH_TYPE_IP,
+                ipv4_src=(
+                    ip_network.network_address,
+                    ip_network.netmask,
+                ),
+            )
+            flows.add_drop_flow(
+                datapath, self.tbl_num, match, [],
+                priority=flows.DEFAULT_PRIORITY,
+            )
+        print("ZZZZZZZZZZZZZZZZZ4")
 
     def _install_ip_blocklist_flow(self, datapath):
         """
@@ -193,6 +286,23 @@ class AccessControlController(MagmaController):
             direction=Direction.OUT,
             eth_type=ether_types.ETH_TYPE_IP,
             ipv4_dst=(
+                ip_network.network_address,
+                ip_network.netmask,
+            ),
+            ip_proto=IPPROTO_ICMP,
+        )
+        flows.add_resubmit_next_service_flow(
+            datapath, self.tbl_num,
+            match, [],
+            priority=flows.MEDIUM_PRIORITY,
+            resubmit_table=self.next_table,
+        )
+
+    def _install_local_icmp_flows_ipv6(self, datapath, ip_network):
+        match = MagmaMatch(
+            direction=Direction.OUT,
+            eth_type=ether_types.ETH_TYPE_IPV6,
+            ipv6_dst=(
                 ip_network.network_address,
                 ip_network.netmask,
             ),
