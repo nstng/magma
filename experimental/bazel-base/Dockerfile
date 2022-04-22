@@ -70,7 +70,7 @@ RUN echo "deb https://artifactory.magmacore.org/artifactory/debian-test/ focal-c
    
 #bcc-tools
 
-COPY ~/bcc-tools_0.23-1_aarch64.deb /tmp
+COPY bcc-tools_0.23-1_aarch64.deb /tmp
 RUN apt install ./tmp/bcc-tools_0.23-1_aarch64.deb
 
 # Install bazel
