@@ -1,6 +1,8 @@
 ################################################################
 # Builder Image (can also be used as developer's image)
 ################################################################
+ARG DEB_PORT=amd64
+
 FROM ubuntu:focal as bazel_builder
 
 ENV TZ=America/New_York \
@@ -60,17 +62,22 @@ RUN apt-get update && \
         zip
 
 # Install depencies from facebook repository
-COPY orc8r/tools/ansible/roles/pkgrepo/files/jfrog.pub /tmp/
-RUN apt-key add /tmp/jfrog.pub && \
-    echo "deb https://facebookconnectivity.jfrog.io/artifactory/list/dev-focal/ focal main" > /etc/apt/sources.list.d/fbc.list && \
-    apt-get update -y && \
-    apt-get install -y bcc-tools
+RUN echo "deb https://artifactory.magmacore.org/artifactory/debian-test/ focal-ci main" > /etc/apt/sources.list.d/magma.list && \
+   wget -qO - https://artifactory.magmacore.org:443/artifactory/api/gpg/key/public -O /tmp/public && \
+   apt-key add /tmp/public && \
+   apt-get update -y && \
+   apt-get install -y oai-gnutls oai-nettle
+   
+#bcc-tools
+
+COPY ~/bcc-tools_0.23-1_aarch64.deb /tmp
+RUN apt install ./tmp/bcc-tools_0.23-1_aarch64.deb
 
 # Install bazel
 WORKDIR /usr/sbin
-RUN wget --progress=dot:giga https://github.com/bazelbuild/bazelisk/releases/download/v1.10.0/bazelisk-linux-amd64 && \
-    chmod +x bazelisk-linux-amd64 && \
-    ln -s /usr/sbin/bazelisk-linux-amd64 /usr/sbin/bazel
+RUN wget --progress=dot:giga https://github.com/bazelbuild/bazelisk/releases/download/v1.10.0/bazelisk-linux-"${DEB_PORT}" && \
+    chmod +x bazelisk-linux-"${DEB_PORT}" && \
+    ln -s /usr/sbin/bazelisk-linux-"${DEB_PORT}" /usr/sbin/bazel
 
 # Install Folly as a static library in the container
 RUN apt-get install -y --no-install-recommends cmake
@@ -137,27 +144,27 @@ RUN git clone https://gitlab.eurecom.fr/oai/asn1c.git && \
 #  see https://gist.github.com/electronjoe/a899e4bfbc2904cb353444386296c38e
 # Note the CFLAGS define below due to glibc deprecation of critical flag,
 #  see https://github.com/rdslw/openwrt/blob/e5d47f32131849a69a9267de51a30d6be1f0d0ac/tools/bison/patches/110-glibc-change-work-around.patch
-RUN wget --progress=dot:giga http://ftp.ntua.gr/mirror/gnu/nettle/nettle-2.5.tar.gz && \
-    tar -xf nettle-2.5.tar.gz && \
-    cd nettle-2.5 && \
-    mkdir build && \
-    cd build/ && \
-    ../configure --disable-openssl --enable-shared --libdir=/usr/lib && \
-    make -j"$(nproc)" && \
-    make install && \
-    ldconfig -v && \
-    cd / && \
-    wget --progress=dot:giga https://www.gnupg.org/ftp/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz && \
-    tar xf gnutls-3.1.23.tar.xz && \
-    cd gnutls-3.1.23 && \
-    mkdir build && cd build && \
-    CFLAGS=-D_IO_ftrylockfile ../configure --libdir=/usr/lib --with-libnettle-prefix=/usr && \
-    make -j"$(nproc)" && \
-    make install && \
-    ldconfig -v && \
-    cd / && \
-    rm -rf nettle* && \
-    rm -rf gnutls*
+# RUN wget --progress=dot:giga http://ftp.ntua.gr/mirror/gnu/nettle/nettle-2.5.tar.gz && \
+#     tar -xf nettle-2.5.tar.gz && \
+#     cd nettle-2.5 && \
+#     mkdir build && \
+#     cd build/ && \
+#     ../configure --disable-openssl --enable-shared --libdir=/usr/lib && \
+#     make -j"$(nproc)" && \
+#     make install && \
+#     ldconfig -v && \
+#     cd / && \
+#     wget --progress=dot:giga https://www.gnupg.org/ftp/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz && \
+#     tar xf gnutls-3.1.23.tar.xz && \
+#     cd gnutls-3.1.23 && \
+#     mkdir build && cd build && \
+#     CFLAGS=-D_IO_ftrylockfile ../configure --libdir=/usr/lib --with-libnettle-prefix=/usr && \
+#     make -j"$(nproc)" && \
+#     make install && \
+#     ldconfig -v && \
+#     cd / && \
+#     rm -rf nettle* && \
+#     rm -rf gnutls*
 
 ##### FreeDiameter
 COPY lte/gateway/c/core/oai/patches/ /tmp/
