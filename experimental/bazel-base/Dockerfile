@@ -63,6 +63,14 @@ RUN apt-get update && \
         wget \
         zip
 
+RUN apt-get install -y --no-install-recommends \
+    libgoogle-glog-dev \
+    libgflags-dev \
+    libboost-all-dev \
+    libevent-dev \
+    libdouble-conversion-dev \
+    libiberty-dev
+
 # Install depencies from facebook repository
 RUN echo "deb https://artifactory.magmacore.org/artifactory/debian-test/ focal-ci main" > /etc/apt/sources.list.d/magma.list && \
    wget -qO - https://artifactory.magmacore.org:443/artifactory/api/gpg/key/public -O /tmp/public && \
@@ -92,14 +100,6 @@ RUN apt-get install -y --no-install-recommends cmake
 #     make install && \
 #     cd / && \
 #     rm -rf fmt
-
-RUN apt-get install -y --no-install-recommends \
-    libgoogle-glog-dev \
-    libgflags-dev \
-    libboost-all-dev \
-    libevent-dev \
-    libdouble-conversion-dev \
-    libiberty-dev
 
 # Facebook Folly C++ lib
 # Note: "Because folly does not provide any ABI compatibility guarantees from
