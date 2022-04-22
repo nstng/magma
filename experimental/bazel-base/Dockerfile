@@ -68,7 +68,7 @@ RUN echo "deb https://artifactory.magmacore.org/artifactory/debian-test/ focal-c
    wget -qO - https://artifactory.magmacore.org:443/artifactory/api/gpg/key/public -O /tmp/public && \
    apt-key add /tmp/public && \
    apt-get update -y && \
-   apt-get install -y oai-gnutls oai-nettle
+   apt-get install -y oai-gnutls oai-nettle libfolly-dev
    
 #bcc-tools
 
@@ -85,13 +85,13 @@ RUN wget --progress=dot:giga https://github.com/bazelbuild/bazelisk/releases/dow
 RUN apt-get install -y --no-install-recommends cmake
 
 ## Install Fmt (Folly Dep)
-RUN git clone https://github.com/fmtlib/fmt.git && cd fmt && \
-    mkdir _build && cd _build && \
-    cmake .. -DFMT_TEST=0 && \
-    make -j"$(nproc)" && \
-    make install && \
-    cd / && \
-    rm -rf fmt
+# RUN git clone https://github.com/fmtlib/fmt.git && cd fmt && \
+#     mkdir _build && cd _build && \
+#     cmake .. -DFMT_TEST=0 && \
+#     make -j"$(nproc)" && \
+#     make install && \
+#     cd / && \
+#     rm -rf fmt
 
 RUN apt-get install -y --no-install-recommends \
     libgoogle-glog-dev \
@@ -105,14 +105,14 @@ RUN apt-get install -y --no-install-recommends \
 # Note: "Because folly does not provide any ABI compatibility guarantees from
 #        commit to commit, we generally recommend building folly as a static library."
 # Here we checkout the hash for v2021.02.22.00 (arbitrary recent version)
-RUN git clone https://github.com/facebook/folly && cd folly && \
-    git checkout tags/v2021.02.15.00 && \
-    mkdir _build && cd _build && \
-    cmake .. && \
-    make -j"$(nproc)" && \
-    make install && \
-    cd / && \
-    rm -rf folly
+# RUN git clone https://github.com/facebook/folly && cd folly && \
+#     git checkout tags/v2021.02.15.00 && \
+#     mkdir _build && cd _build && \
+#     cmake .. && \
+#     make -j"$(nproc)" && \
+#     make install && \
+#     cd / && \
+#     rm -rf folly
 
 RUN apt-get install -y --no-install-recommends \
     # used by libtins and connection tracker
