@@ -69,7 +69,7 @@
 /.github/workflows/bazel.yml @magma/approvers-bazel
 /.github/workflows/docker-builder-bazel-base.yml @magma/approvers-bazel
 /bazel/ @magma/approvers-bazel
-/experimental/bazel-base/ @magma/approvers-bazel
+/.devcontainer/bazel-base/ @magma/approvers-bazel
 /.bazelignore @magma/approvers-bazel
 /.bazelrc @magma/approvers-bazel
 *.bazel @magma/approvers-bazel
