@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEVCONTAINER_IMAGE: "ghcr.io/magma/magma/devcontainer:latest"
-  BAZEL_BASE_IMAGE: "ghcr.io/magma/magma/bazel-base:latest"
+  DEVCONTAINER_IMAGE: "ghcr.io/nstng/magma/devcontainer:latest"
+  BAZEL_BASE_IMAGE: "ghcr.io/nstng/magma/bazel-base:latest"
   BAZEL_CACHE: bazel-cache
   BAZEL_CACHE_REPO: bazel-cache-repo
 

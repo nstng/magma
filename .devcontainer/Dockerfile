@@ -1,7 +1,7 @@
 ################################################################
 # Devcontainer Image (for local development)
 ################################################################
-FROM ghcr.io/magma/magma/bazel-base:latest as devcontainer
+FROM ghcr.io/nstng/magma/bazel-base:latest as devcontainer
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="true"
