@@ -1,5 +1,4 @@
 ---
-################################################################################
 # Copyright 2020 The Magma Authors.
 
 # This source code is licensed under the BSD-style license found in the
@@ -10,37 +9,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+- name: Remove all old registries
+  shell: rm -rf /etc/apt/sources.list.d/*.list
+  become: yes
+  ignore_errors: yes
+
 - name: Ensure ca-certificates is up to date
   become: yes
   apt:
     name: "{{ packages }}"
-    only_upgrade: yes
+    state: latest
+    update_cache: yes
   vars:
     packages:
       - ca-certificates
 
-- name: Add GPG key for magma repository
-  apt_key:
-    url: https://artifactory.magmacore.org:443/artifactory/api/gpg/key/public
-    state: present
-
-- name: Remove old magma etagecom sources
-  shell: rm -rf /etc/apt/sources.list.d/packages_magma_etagecom_io.list
-  become: yes
-  ignore_errors: yes
-
-- name: Add apt-transport-https
-  apt: pkg=apt-transport-https state=present update_cache=yes
-  #  when: preburn
-
 - name: Add JFrog key
-  apt_key:
-    url: https://facebookconnectivity.jfrog.io/artifactory/api/gpg/key/public
-    state: present
+  shell: wget -qO - https://facebookconnectivity.jfrog.io/artifactory/api/gpg/key/public | apt-key add -
 
 - name: Add JFrog repo
   apt_repository:
     repo: 'deb https://facebookconnectivity.jfrog.io/artifactory/list/{{ repo }}/ {{ distribution }} main'
     update_cache: yes
     mode: 0644
+
+- name: Update apt
+  apt:
+    update_cache: yes
