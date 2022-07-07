@@ -116,37 +116,13 @@ def _parse_ovsdb_dump_output(
         ValueError: If any errors are encountered while parsing output.
     """
 
-    def create_error_result(error_msg):
-        return OVSDBCommandResult(
-            out='',
-            err=error_msg,
-        )
-
-    def find_header_line_idx(lines):
-        line_re = re.compile('^---.+$')
-        for i, line in enumerate(lines):
-            if line_re.match(line):
-                return i
-        raise ValueError('Could not find header in ovsdb-client output')
-
-    def match_gtp_lines(lines):
-        line_matches = []
-        for line in lines:
-            line_remote_ip_match = interface_tx_rx_stats_re.match(line)
-            if line_remote_ip_match:
-                match_dict = line_remote_ip_match.groupdict()
-                if not 'remote_ip' in match_dict:
-                    match_dict['remote_ip'] = ""
-                line_matches.append(match_dict)
-        return line_matches
-
     if stderr:
         return create_error_result(stderr)
 
     try:
         stdout_lines = stdout.decode('ascii').split('\n')
-        header_line_idx = find_header_line_idx(stdout_lines)
-        gtp_matches = match_gtp_lines(stdout_lines[header_line_idx + 1:])
+        header_line_idx = _find_header_line_idx(stdout_lines)
+        gtp_matches = _match_gtp_lines(stdout_lines[header_line_idx + 1:])
 
         results = []
         for m in gtp_matches:
@@ -157,4 +133,28 @@ def _parse_ovsdb_dump_output(
             err=None,
         )
     except ValueError as e:
-        return create_error_result(str(e.args[0]))
+        return _create_error_result(str(e.args[0]))
+
+def _create_error_result(error_msg):
+        return OVSDBCommandResult(
+            out='',
+            err=error_msg,
+        )
+
+def _find_header_line_idx(lines):
+    line_re = re.compile('^---.+$')
+    for i, line in enumerate(lines):
+        if line_re.match(line):
+            return i
+    raise ValueError('Could not find header in ovsdb-client output')
+
+def _match_gtp_lines(lines):
+    line_matches = []
+    for line in lines:
+        line_remote_ip_match = interface_tx_rx_stats_re.match(line)
+        if line_remote_ip_match:
+            match_dict = line_remote_ip_match.groupdict()
+            if not 'remote_ip' in match_dict:
+                match_dict['remote_ip'] = ""
+            line_matches.append(match_dict)
+    return line_matches
