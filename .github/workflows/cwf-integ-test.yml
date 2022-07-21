@@ -59,7 +59,7 @@ jobs:
           args: 'CWF integration test: docker build step failed on [${{ env.SHA }}](${{github.event.repository.owner.html_url}}/magma/commits/${{ env.SHA }}): ${{ steps.commit.outputs.title}}'
   cwf-integ-test:
     if: github.repository_owner == 'magma' || github.event_name == 'workflow_dispatch'
-    runs-on: macos-10.15
+    runs-on: macos-12
     needs: docker-build
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
