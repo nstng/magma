@@ -1,0 +1,66 @@
+---
+name: "Build and Upload Magma Dependencies"
+on:
+  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+
+jobs:
+  build_deps:
+    runs-on: ubuntu-latest
+    #if: github.repository_owner == 'magma' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        with:
+          fetch-depth: 0
+      - name: Cache magma-dev-box
+        uses: actions/cache@0865c47f36e68161719c5b124609996bb5c40129 # pin@v3
+        with:
+          path: ~/.vagrant.d/boxes/magmacore-VAGRANTSLASH-magma_dev
+          key: vagrant-box-magma-dev
+      # - name: Install pre requisites
+      #   run: |
+      #     pip3 install --upgrade pip
+      #     pip3 install ansible fabric3 jsonpickle requests PyYAML
+      #     vagrant plugin install vagrant-vbguest vagrant-disksize vagrant-vbguest vagrant-mutate
+      # - name: Open up network interfaces for VM
+      #   run: |
+      #     sudo mkdir -p /etc/vbox/
+      #     sudo touch /etc/vbox/networks.conf
+      #     sudo sh -c "echo '* 192.168.0.0/16' > /etc/vbox/networks.conf"
+      #     sudo sh -c "echo '* 3001::/64' >> /etc/vbox/networks.conf"
+      - name: do it
+        run: |
+          cd lte/gateway
+          vagrant up magma
+          vagrant ssh -c "mkdir /vagrant/magma-packages && cd magma/third_party/build && ./build.py nettle && cp *.deb /vagrant/magma-packages"
+      
+      # HTTP_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -uci-bot:${{ secrets.JFROG_CIBOT_APIKEYS }} -XPUT "https://artifactory.magmacore.org/artifactory/debian-test/pool/focal-ci/$i;deb.distribution=focal-ci;deb.component=main;deb.architecture=amd64" -T $i)
+      - name: Publish debian packages
+        run: |
+          cd lte/gateway/magma-packages
+          ARTIFACTS='{"packages":[],"valid":false}'
+          PUBLISH_ERROR="false"
+          for i in `ls -a1 *.deb`
+          do
+            echo "Pushing package $i to JFROG artifiactory: https://artifactory.magmacore.org/artifactory/debian-test/pool"
+            HTTP_RESPONSE="FOO"
+            echo "$HTTP_RESPONSE"
+            # extract the body and download uri
+            HTTP_BODY=$(echo $HTTP_RESPONSE | sed -e 's/HTTPSTATUS\:.*//g')
+            URI=$(echo $HTTP_BODY | jq -r '.uri')
+            if [[ "$URI" != "null" ]]; then
+              ARTIFACTS=$(echo $ARTIFACTS | jq --arg uri $URI '.packages += [$uri]')
+            else
+              PUBLISH_ERROR="true"
+            fi
+            # extract and check status
+            HTTP_STATUS=$(echo $HTTP_RESPONSE | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+            if [[ "$HTTP_STATUS" != "2"* ]]; then
+              PUBLISH_ERROR="true"
+            fi
+          done
+          # set output
+          if [[ "$PUBLISH_ERROR" != "true" ]]; then
+            ARTIFACTS=$(echo $ARTIFACTS | jq '. += {"valid":true}')
+          fi
+          echo "::set-output name=artifacts::$(echo $ARTIFACTS)"
