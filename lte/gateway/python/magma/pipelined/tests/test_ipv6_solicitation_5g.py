@@ -18,12 +18,7 @@ from concurrent.futures import Future
 from lte.protos.mconfig.mconfigs_pb2 import PipelineD
 from magma.pipelined.app.ipv6_solicitation import IPV6SolicitationController
 from magma.pipelined.bridge_util import BridgeTools
-from magma.pipelined.ipv6_prefix_store import (
-    get_ipv6_interface_id,
-    get_ipv6_prefix,
-)
 from magma.pipelined.openflow.registers import DIRECTION_REG, Direction
-from magma.pipelined.tests.app.packet_injector import ScapyPacketInjector
 from magma.pipelined.tests.app.start_pipelined import (
     PipelinedController,
     TestSetup,
@@ -39,26 +34,14 @@ from magma.pipelined.tests.pipelined_test_util import (
     stop_ryu_app_thread,
     wait_after_send,
 )
-from scapy.arch import get_if_hwaddr
-from scapy.layers.inet6 import (
-    ICMPv6ND_NS,
-    ICMPv6ND_RS,
-    ICMPv6NDOptSrcLLAddr,
-    IPv6,
-)
-from scapy.layers.l2 import Ether
 
 
 class IPV6RouterSolicitation5GTableTest(unittest.TestCase):
     BRIDGE = 'testing_br'
-    IFACE = 'testing_br'
-    MAC_DEST = "5e:cc:cc:b1:49:4b"
     BRIDGE_IP = '192.168.128.1'
-    UE_BLOCK = '192.168.128.0/24'
+    IFACE = 'testing_br'
     UE_MAC = '5e:cc:cc:b1:49:4b'
-    UE_IP = '192.168.128.22'
     OTHER_MAC = '0a:00:27:00:00:02'
-    OTHER_IP = '1.2.3.4'
 
     @classmethod
     def setUpClass(cls, *_):
@@ -109,9 +92,7 @@ class IPV6RouterSolicitation5GTableTest(unittest.TestCase):
                 'classifier_controller_id': 5,
                 'enable5g_features': True,
             },
-            mconfig=PipelineD(
-                ue_ip_block=cls.UE_BLOCK,
-            ),
+            mconfig=PipelineD(),
             loop=None,
             service_manager=cls.service_manager,
             integ_test=False,
@@ -136,32 +117,6 @@ class IPV6RouterSolicitation5GTableTest(unittest.TestCase):
         """
         Verify that a UPLINK->UE Router Solic & Router Adv
         """
-        ll_addr = get_if_hwaddr('testing_br')
-
-        pkt_sender = ScapyPacketInjector(self.IFACE)
-
-        pkt_rs = Ether(dst=self.OTHER_MAC, src=self.UE_MAC)
-        pkt_rs /= IPv6(
-            src='fe80:24c3:d0ff:fef3:9d21:4407:d337:1928',
-            dst='ff02::2',
-        )
-        pkt_rs /= ICMPv6ND_RS()
-        pkt_rs /= ICMPv6NDOptSrcLLAddr(lladdr=ll_addr)
-
-        pkt_ns = Ether(dst=self.OTHER_MAC, src=self.UE_MAC)
-        pkt_ns /= IPv6(
-            src='fe80::9d21:4407:d337:1928',
-            dst='ff02::2',
-        )
-        pkt_ns /= ICMPv6ND_NS(tgt='abcd:87:3::')
-        pkt_ns /= ICMPv6NDOptSrcLLAddr(lladdr=ll_addr)
-
-        ipv6_addr = 'ab22:5:6c:9:9d21:4407:d337:1928'
-        interface = get_ipv6_interface_id(ipv6_addr)
-        prefix = get_ipv6_prefix(ipv6_addr)
-        self.service_manager.interface_to_prefix_mapper.save_prefix(
-            interface, prefix,
-        )
 
         ulink_args = RyuForwardFlowArgsBuilder(self._tbl_num) \
             .set_eth_match(eth_dst=self.OTHER_MAC, eth_src=self.UE_MAC) \
@@ -176,10 +131,4 @@ class IPV6RouterSolicitation5GTableTest(unittest.TestCase):
         )
 
         with isolator, snapshot_verifier:
-            pkt_sender.send(pkt_rs)
-            pkt_sender.send(pkt_ns)
             wait_after_send(self.testing_controller, wait_time=5)
-
-
-if __name__ == "__main__":
-    unittest.main()
