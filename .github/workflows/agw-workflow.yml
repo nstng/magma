@@ -12,6 +12,7 @@
 name: agw-workflow
 
 on:
+  workflow_dispatch: null
   push:
     branches:
       - master
@@ -261,13 +262,6 @@ jobs:
         uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
       - name: Maximize build space
         uses: ./.github/workflows/composite/maximize-build-space
-      - name: Setup Devcontainer Image
-        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # pin@v3
-        with:
-          image: ${{ env.DEVCONTAINER_IMAGE }}
-          # Run a simple echo command to pull down the image. This makes it a bit more clear how much time is spent on building Magma and not pulling down the image.
-          run: |
-            echo "Pulled the devontainer image!"
       - name: Setup Bazel Base Image
         uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # pin@v3
         with:
@@ -277,18 +271,7 @@ jobs:
           run: |
             echo "Pulled the bazel base image!"
             bazel # pull down bazel, if bazel download fails we can fail before we do all the lengthy work below
-      - name: Run codecov with CMake (MME)
-        if: always()
-        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # pin@v3
-        with:
-          image: ${{ env.DEVCONTAINER_IMAGE }}
-          # TODO: Remove work-around mount of Github workspace to /magma (https://github.com/addnab/docker-run-action/issues/11)
-          options: -v ${{ github.workspace }}:/workspaces/magma/ -v ${{ github.workspace }}/lte/gateway/configs:/etc/magma
-          run: |
-            cd $MAGMA_ROOT/lte/gateway
-            make coverage
-            cp $C_BUILD/coverage.info $MAGMA_ROOT
-      - name: Run coverage with Bazel (COMMON / SESSIOND / SCTPD / LIAGENT / CONNECTIOND)
+      - name: Run coverage with Bazel
         if: always()
         id: bazel-codecoverage
         uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # pin@v3
@@ -305,7 +288,7 @@ jobs:
             bazel coverage \
               --profile=Bazel_test_coverage_profile \
               --experimental_split_coverage_postprocessing --experimental_fetch_all_coverage_outputs --remote_download_outputs=all \
-              -- //orc8r/gateway/c/...:* //lte/gateway/c/...:* -//lte/gateway/c/core/...:*
+              -- //orc8r/gateway/c/...:* //lte/gateway/c/...:*
             # copy out coverage information into magma so that it's accessible from the CI node
             cp bazel-out/_coverage/_coverage_report.dat $MAGMA_ROOT
       - name: Upload code coverage
