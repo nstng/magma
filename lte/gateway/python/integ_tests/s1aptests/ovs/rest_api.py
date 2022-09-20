@@ -58,6 +58,25 @@ def get_datapath(ip=DEV_VM_URL):
     url = "http://%s:%d/stats/switches" % (ip, OF_REST_PORT)
     return str(_ovs_api_request('GET', url)[0])
 
+def is_datapath_initialized(ip=DEV_VM_URL):
+    """
+    Test if pipelined is started and a datapath is initialized.
+    This means, endpoint is reachable and a list containing at least
+    one datapath id is returned (for tests it's actually exactly one entry).
+    """
+    url = "http://%s:%d/stats/switches" % (ip, OF_REST_PORT)
+    try:
+        datapath_list = _ovs_api_request('GET', url)
+    except requests.ConnectionError:
+        # Check if datapath is initialized failed: pipelined not reachable.
+        return False
+
+    if len(datapath_list) == 0:
+        # Check if datapath is initialized failed: datapath not initialized.
+        return False
+
+    return True
+
 
 def _ovs_api_request(
     method, url, data=None, max_retries=MAX_RETRIES,

@@ -27,7 +27,11 @@ from typing import Optional
 import grpc
 import s1ap_types
 from integ_tests.gateway.rpc import get_rpc_channel
-from integ_tests.s1aptests.ovs.rest_api import get_datapath, get_flows
+from integ_tests.s1aptests.ovs.rest_api import (
+    get_datapath,
+    get_flows,
+    is_datapath_initialized,
+)
 from lte.protos.abort_session_pb2 import AbortSessionRequest, AbortSessionResult
 from lte.protos.abort_session_pb2_grpc import AbortSessionResponderStub
 from lte.protos.ha_service_pb2 import StartAgwOffloadRequest
@@ -983,8 +987,28 @@ class MagmadUtil(object):
             )
         elif self._init_system == InitMode.DOCKER:
             self.exec_command("cd /home/vagrant/magma/lte/gateway/docker && docker-compose restart")
-        print("Waiting for all services to restart. Sleeping for 60 seconds..")
-        self.wait_for_restart_to_finish(60)
+
+        self._wait_for_pipelined_to_initialize()
+
+    def _wait_for_pipelined_to_initialize(self):
+        print("Waiting for pipelined to be started ...")
+        INITIAL_WAIT_TIME_SECONDS = 10
+        
+        print(f"  waiting initially {INITIAL_WAIT_TIME_SECONDS} seconds ...")
+        
+        time.sleep(INITIAL_WAIT_TIME_SECONDS)
+        wait_time_seconds = INITIAL_WAIT_TIME_SECONDS
+        
+        WAIT_INTERVAL_SECONDS = 5
+        MAX_WAIT_SECONDS = 120
+        print(f"  check every {WAIT_INTERVAL_SECONDS} seconds (max {MAX_WAIT_SECONDS} seconds) if pipelined is started ...")
+        while not is_datapath_initialized():
+            print(f"  pipelined not yet initialized for {wait_time_seconds} seconds ...")
+            time.sleep(WAIT_INTERVAL_SECONDS)
+            wait_time_seconds += WAIT_INTERVAL_SECONDS
+        
+            if wait_time_seconds > MAX_WAIT_SECONDS:
+                raise RuntimeError(f"Pipelined failed to initialize after {MAX_WAIT_SECONDS} seconds.")
 
     def restart_services(self, services, wait_time=0):
         """
