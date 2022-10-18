@@ -19,6 +19,9 @@ set -euo pipefail
 # FUNCTION DECLARATIONS
 ###############################################################################
 
+# vagrant@magma-test:~/magma$ bazel build --define=on_magma_test=1 --build_python_zip //lte/gateway/python/integ_tests/s1aptests:test_attach_detach_looped
+# sudo python3 bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_attach_detach_looped.zip
+
 help() {
     echo -e "${BOLD}Executes all integration tests."
     echo -e "Usage:${NO_FORMATTING}"
@@ -206,9 +209,9 @@ list_traffic_server_tests() {
 setup_extended_tests() {
     echo "Setting up the environment for the extended tests."
     echo "Building..."
-    bazel build "//lte/gateway/python/integ_tests/s1aptests:test_modify_mme_config_for_sanity" --define=on_magma_test=1
+    bazel build "//lte/gateway/python/integ_tests/s1aptests:test_modify_mme_config_for_sanity" --build_python_zip --define=on_magma_test=1
     echo "Executing..."
-    if sudo "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_modify_mme_config_for_sanity";
+    if sudo python3 "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_modify_mme_config_for_sanity.zip";
     then
         echo "Setup finished successfully."
     else
@@ -221,9 +224,9 @@ teardown_extended_tests() {
     then
         echo "Cleaning up the environment after the extended tests."
         echo "Building..."
-        bazel build "//lte/gateway/python/integ_tests/s1aptests:test_restore_mme_config_after_sanity" --define=on_magma_test=1
+        bazel build "//lte/gateway/python/integ_tests/s1aptests:test_restore_mme_config_after_sanity" --build_python_zip --define=on_magma_test=1
         echo "Executing..."
-        if sudo "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_restore_mme_config_after_sanity";
+        if sudo python3 "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_restore_mme_config_after_sanity.zip";
         then
             echo "Cleanup finished successfully."
         else
@@ -237,9 +240,9 @@ teardown_extended_tests() {
 setup_nonsanity_tests() {
     echo "Setting up the environment for the nonsanity tests."
     echo "Building..."
-    bazel build "//lte/gateway/python/integ_tests/s1aptests:test_modify_config_for_non_sanity" --define=on_magma_test=1
+    bazel build "//lte/gateway/python/integ_tests/s1aptests:test_modify_config_for_non_sanity" --build_python_zip --define=on_magma_test=1
     echo "Executing..."
-    if sudo "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_modify_config_for_non_sanity";
+    if sudo python3 "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_modify_config_for_non_sanity.zip";
     then
         echo "Setup finished successfully."
     else
@@ -252,9 +255,9 @@ teardown_nonsanity_tests() {
     then
         echo "Cleaning up the environment after the nonsanity tests."
         echo "Building..."
-        bazel build "//lte/gateway/python/integ_tests/s1aptests:test_restore_config_after_non_sanity" --define=on_magma_test=1
+        bazel build "//lte/gateway/python/integ_tests/s1aptests:test_restore_config_after_non_sanity" --build_python_zip --define=on_magma_test=1
         echo "Executing..."
-        if sudo "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_restore_config_after_non_sanity";
+        if sudo python3 "${MAGMA_ROOT}/bazel-bin/lte/gateway/python/integ_tests/s1aptests/test_restore_config_after_non_sanity.zip";
         then
             echo "Cleanup finished successfully."
         else
@@ -288,11 +291,11 @@ run_test() {
     (
         echo "BUILDING TEST: ${TARGET}"
         set -x
-        bazel build "${TARGET}" --define=on_magma_test=1
+        bazel build "${TARGET}" --build_python_zip --define=on_magma_test=1
         set +x
         echo "RUNNING TEST: ${TARGET}"
         set -x
-        sudo "${MAGMA_ROOT}/bazel-bin/${TARGET_PATH}/${SHORT_TARGET}" "${FLAKY_ARGS[@]}" \
+        sudo python3 "${MAGMA_ROOT}/bazel-bin/${TARGET_PATH}/${SHORT_TARGET}.zip" "${FLAKY_ARGS[@]}" \
             --junit-xml="${INTEGTEST_REPORT_FOLDER}/${SHORT_TARGET}_report.xml" \
             -o "junit_suite_name=${SHORT_TARGET}" -o "junit_logging=no";
     )
