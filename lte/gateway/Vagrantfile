@@ -132,8 +132,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     magma_test.vm.provider "virtualbox" do |vb|
       vb.name = "magma_test"
       vb.linked_clone = true
-      vb.customize ["modifyvm", :id, "--memory", "1024"]
-      vb.customize ["modifyvm", :id, "--cpus", "1"]
+      vb.customize ["modifyvm", :id, "--memory", ENV.fetch("MAGMA_TEST_MEMORY_MB", "1024")]
+      vb.customize ["modifyvm", :id, "--cpus", ENV.fetch("MAGMA_TEST_CPUS", "1")]
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
 

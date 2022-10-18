@@ -73,7 +73,7 @@ jobs:
         run: |
           cd lte/gateway
           export MAGMA_DEV_CPUS=3
-          export MAGMA_DEV_MEMORY_MB=9216
+          export MAGMA_DEV_MEMORY_MB=7168
           fab provision_magma_dev_vm
       - name: Build all services and scripts with bazel
         run: |
@@ -86,6 +86,8 @@ jobs:
           vagrant ssh -c 'cd ~/magma; bazel/scripts/link_scripts_for_bazel_integ_tests.sh;' magma
       - name: Setup magma test VM and traffic server VM
         run: |
+          export MAGMA_TEST_CPUS=3
+          export MAGMA_TEST_MEMORY_MB=2048
           cd lte/gateway
           fab bazel_integ_test_post_build
           vagrant ssh -c 'bash -ci "disable-tcp-checksumming"' magma_test
