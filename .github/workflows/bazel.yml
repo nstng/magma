@@ -302,10 +302,10 @@ jobs:
           JF_URL: https://artifactory.magmacore.org
           JF_USER: ${{ secrets.JFROG_USERNAME }}
           JF_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-      - name: Set dry run environment variable
-        if: ${{ ! ( github.event_name == 'push' && github.repository_owner == 'magma' ) }}
-        run: |
-          echo "IS_DRY=--dry-run" >> $GITHUB_ENV
+      # - name: Set dry run environment variable
+      #   if: ${{ ! ( github.event_name == 'push' && github.repository_owner == 'magma' ) }}
+      #   run: |
+      #     echo "IS_DRY=--dry-run" >> $GITHUB_ENV
       - name: Publish debian packages
         env:
           ARTIFACTORY_URL: https://artifactory.magmacore.org:443/artifactory/
