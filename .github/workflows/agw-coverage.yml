@@ -81,7 +81,6 @@ jobs:
           # TODO: Remove work-around mount of Github workspace to /magma (https://github.com/addnab/docker-run-action/issues/11)
           options: -v ${{ github.workspace }}:/workspaces/magma/ -v ${{ github.workspace }}/lte/gateway/configs:/etc/magma
           run: |
-            bazel/scripts/remote_cache_bazelrc_setup.sh "${{ env.CACHE_KEY }}" "${{ env.REMOTE_DOWNLOAD_OPTIMIZATION_C_CPP }}" "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
             # Collecting coverage with Bazel can be slow. We can follow this thread to see if this can be improved: https://github.com/bazelbuild/bazel/issues/8178
             # Coverage in bazel is flaky for remote caches - the flags below are helping. See GH13026 for details.
             bazel coverage \
@@ -153,7 +152,6 @@ jobs:
           # TODO: Remove work-around mount of Github workspace to /magma (https://github.com/addnab/docker-run-action/issues/11)
           options: -v ${{ github.workspace }}:/workspaces/magma/ -v ${{ github.workspace }}/lte/gateway/configs:/etc/magma
           run: |
-            bazel/scripts/remote_cache_bazelrc_setup.sh "${{ env.CACHE_KEY }}" "${{ env.REMOTE_DOWNLOAD_OPTIMIZATION_PYTHON }}" "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
             # Collecting coverage with Bazel can be slow. We can follow this thread to see if this can be improved: https://github.com/bazelbuild/bazel/issues/8178
             # Coverage in bazel is flaky for remote caches - the flags below are helping. See GH13026 for details.
             bazel coverage \

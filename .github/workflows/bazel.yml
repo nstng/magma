@@ -116,8 +116,7 @@ jobs:
             printf '\r%s\r' '###############################' 1>&2
             printf '\r%s\r' 'Configuring bazel remote cache.' 1>&2
             printf '\r%s\r\r' '###############################' 1>&2
-            bazel/scripts/remote_cache_bazelrc_setup.sh "${{ env.CACHE_KEY }}" "${{ env.REMOTE_DOWNLOAD_OPTIMIZATION }}" "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
-
+            
             printf '\r%s\r' '###############################' 1>&2
             printf '\r%s\r' 'Executing bazel build ${{ matrix.bazel-config }}' 1>&2
             printf '\r%s\r' '###############################' 1>&2
@@ -290,7 +289,6 @@ jobs:
           options: -v ${{ github.workspace }}:/workspaces/magma/ -v ${{ github.workspace }}/lte/gateway/configs:/etc/magma
           run: |
             cd /workspaces/magma
-            bazel/scripts/remote_cache_bazelrc_setup.sh "${{ env.CACHE_KEY }}" "${{ env.REMOTE_DOWNLOAD_OPTIMIZATION }}" "${{ secrets.BAZEL_REMOTE_PASSWORD }}"
             bazel run //lte/gateway/release:release_build \
               --config=production \
               --profile=Bazel_build_package_profile
